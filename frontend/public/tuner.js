@@ -59,7 +59,7 @@ class PitchDetector {
   }
 
   //Function that will be used to calculate an accurate pitch
-  autoCorrelate(buffer) {
+  autoCorrelate() {
     this.note = "Test"
   }
 }
@@ -68,6 +68,6 @@ class PitchDetector {
 const pitchDetector = new PitchDetector();
 
 //Event listener is used to detect when the button is activated and when activated begins the program
-document.getElementById("Tuner").addEventListener("click", () => {
+document.getElementById("btn").addEventListener("click", () => {
   pitchDetector.startCapture();
 });

@@ -6,10 +6,9 @@ class PitchDetector {
     this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
     //Creates an analyser node used to extract data from audio
     this.analyser = this.audioContext.createAnalyser();
-    //Indicates the status of audio capture
-    this.audioCaptured = false;
     //An array that will be used to store audio data
     this.dataArray = null;
+    this.note = null
   }
 
   //Function used to capture user audio
@@ -28,7 +27,6 @@ class PitchDetector {
         //An array named 'dataArray' is created to store the time-domain data
         this.dataArray = new Float32Array(this.analyser.fftSize);
         //Sets the variable 'audioCaptured' to true when audio is being captured
-        this.audioCaptured = true;
         document.getElementById("audioInput").textContent = `Audio Capture: ${this.audioCaptured}`;
         //Calls the processAudio function
         this.processAudio();
@@ -43,16 +41,13 @@ class PitchDetector {
 
   //Function used to process the audio stream
   processAudio() {
-    //Verifies that audio has been captured
-    if (this.audioCaptured) {
-      //Copies waveform data into 'dataArray' that wilol be used to calculate the note
+      //Copies waveform data into 'dataArray' that will be used to calculate the note
       this.analyser.getFloatTimeDomainData(this.dataArray);
       //Results from processing is stored in the variable 'freq' that will be used to compare against note frequency values
-      const freq = this.autoCorrelate(this.dataArray);
+      let fundamentalFreq = this.autoCorrelate();
       //If a valid frequency is detected then the HTML element with id 'noteOutput' will output the current value of 'this.note'
-      if (freq !== -1) {
-        document.getElementById("noteOutput").textContent =
-          `Closest Note: ${this.note}`;
+      if (fundamentalFreq !== -1) {
+        document.getElementById("noteOutput").textContent = `Closest Note: ${this.note}`;
       }
       //Continuously calls the processAudio function using requestAnimationFrame 
       requestAnimationFrame(this.processAudio.bind(this));
@@ -81,13 +76,13 @@ class PitchDetector {
       let correlation = 0;
 
       for (let i = 0; i < maxSamples; i++) {
-        correlation += Math.abs((this.dataArray[i]) - (this.dataArray[i + offSet]));
+        correlation += Math.abs((this.dataArray[i]) - (this.dataArray[i + offset]));
       }
 
       correlation = 1 - (correlation / maxSamples);
       if (correlation > 0.9 && correlation > lastCorrelation) {
         bestCorrelation = correlation;
-        bestOffset = offSet;
+        bestOffset = offset;
       }
 
       lastCorrelation = correlation;
@@ -96,8 +91,9 @@ class PitchDetector {
     if (bestCorrelation > 0.01) {
       let fundamentalFreq = this.audioContext.sampleRate / bestOffset;
       this.note = this.getNoteFromFrequency(fundamentalFreq);
-      return fundamentalFreq
+      return fundamentalFreq;
     }
+
     return -1;
   }
 
@@ -149,7 +145,7 @@ class PitchDetector {
       { note: "G3", freq: 196.00 },
       { note: "G#3/A♭3", freq: 207.65 },
       { note: "A3", freq: 220.00 },
-      { nots: "A#3/B♭3", freq: 233.08 },
+      { note: "A#3/B♭3", freq: 233.08 },
       { note: "B3", freq: 246.94 },
       { note: "C4", freq: 261.63 },
       { note: "C#4/D♭4", freq: 277.18 },
@@ -219,6 +215,7 @@ class PitchDetector {
 
     return closestNote.note;
   }
+
 }
 
 //Creates an instantiation of the class

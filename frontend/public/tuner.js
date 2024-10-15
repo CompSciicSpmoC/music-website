@@ -37,6 +37,7 @@ class PitchDetector {
       //Handle errors/callbacks and outputs relevant information to the user
       .catch((error) => {
         alert("Couldn't access microphone: " + error);
+        console.log(error);
       });
   }
 
@@ -61,159 +62,163 @@ class PitchDetector {
   //Function that will be used to calculate an accurate pitch
   autoCorrelate() {
     let SIZE = this.dataArray.length;
-    let maxSamples = Math.floor(SIZE/2);
-    let bestOffSet = -1;
+    let maxSamples = Math.floor(SIZE / 2);
+    let bestOffset = -1;
     let bestCorrelation = 0
     let rms = 0 
 
     for (let i = 0; i < SIZE; i++) {
-      rms += this.dataArray[i] ^ this.dataArray[i];
+      rms += this.dataArray[i] * this.dataArray[i];
     }
 
-    rms += Math.sqrt(rms/SIZE);  
+    rms = Math.sqrt(rms / SIZE);  
 
-    if (rms < 0.01) return -1 
+    if (rms < 0.01) return -1;
 
     let lastCorrelation = 1;
 
-    for (let offSet = 0; offSet < maxSamples; offset++) {
-      let Correlation = 0;
+    for (let offset = 0; offset < maxSamples; offset++) {
+      let correlation = 0;
 
       for (let i = 0; i < maxSamples; i++) {
-        correlation += Math.abs((dataArray[i]) - (dataArray[i - offSet]));
+        correlation += Math.abs((this.dataArray[i]) - (this.dataArray[i + offSet]));
       }
 
       correlation = 1 - (correlation / maxSamples);
       if (correlation > 0.9 && correlation > lastCorrelation) {
         bestCorrelation = correlation;
-        bestOffSet = offSet;
+        bestOffset = offSet;
       }
 
       lastCorrelation = correlation;
     }
 
     if (bestCorrelation > 0.01) {
-      let fundamentalFreq = this.audioContext.sampleRate / bestOffSet;
-      this.Note = this.getNoteFromFrequency(fundamentalFreq);
+      let fundamentalFreq = this.audioContext.sampleRate / bestOffset;
+      this.note = this.getNoteFromFrequency(fundamentalFreq);
       return fundamentalFreq
     }
     return -1;
   }
 
   getNoteFromFrequency(frequency) {
-    const notes = [
-      { notes: "C0", freq: 16.35 },
-      { notes: "C#0/D♭0", freq: 17.32 },
-      { notes: "D0", freq: 18.35 },
-      { notes: "D#0/E♭0", freq: 19.35 },
-      { notes: "E0", freq: 20.60 },
-      { notes: "F0", freq: 21.83 },
-      { notes: "F#0/G♭0", freq: 23.12 },
-      { notes: "G0", freq: 24.50 },
-      { notes: "G#0/A♭0", freq: 25.56 },
-      { notes: "A0", freq: 27.50 },
-      { notes: "A#0/B♭0", freq: 29.14 },
-      { notes: "B0", freq: 30.87 },
-      { notes: "C1", freq: 32.70 },
-      { notes: "C#1/D♭1", freq: 34.65 },
-      { notes: "D1", freq: 36.71 },
-      { notes: "D#1/E♭1", freq: 38.89 },
-      { notes: "E1", freq: 41.20 },
-      { notes: "F1", freq: 43.65 },
-      { notes: "F#1/G♭1", freq: 46.25 },
-      { notes: "G1", freq: 49.00 },
-      { notes: "G#1/A♭1", freq: 51.91 },
-      { notes: "A1", freq: 55.00 },
-      { notes: "A#1/B♭1", freq: 58.27 },
-      { notes: "B1", freq: 61.74 },
-      { notes: "C2", freq: 65.41 },
-      { notes: "C#2/D♭2", freq: 69.30 },
-      { notes: "D2", freq: 73.42 },
-      { notes: "D#2/E♭2", freq: 77.78 },
-      { notes: "E2", freq: 82.41 },
-      { notes: "F2", freq: 87.31 },
-      { notes: "F#2/G♭2", freq: 92.50 },
-      { notes: "G2", freq: 98.00 },
-      { notes: "G#2/A♭2", freq: 103.83 },
-      { notes: "A2", freq: 110.00 },
-      { notes: "A#2/B♭2", freq: 116.54 },
-      { notes: "B2", freq: 123.47 },
-      { notes: "C3", freq: 130.81 },
-      { notes: "C#3/D♭3", freq: 138.59 },
-      { notes: "D3", freq: 146.83 },
-      { notes: "D#3/E♭3", freq: 155.56 },
-      { notes: "E3", freq: 164.81 },
-      { notes: "F3", freq: 174.61 },
-      { notes: "F#3/G♭3", freq: 185.00 },
-      { notes: "G3", freq: 196.00 },
-      { notes: "G#3/A♭3", freq: 207.65 },
-      { notes: "A3", freq: 220.00 },
-      { notes: "A#3/B♭3", freq: 233.08 },
-      { notes: "B3", freq: 246.94 },
-      { notes: "C4", freq: 261.63 },
-      { notes: "C#4/D♭4", freq: 277.18 },
-      { notes: "D4", freq: 293.66 },
-      { notes: "D#4/E♭4", freq: 311.13 },
-      { notes: "E4", freq: 329.63 },
-      { notes: "F4", freq: 349.23 },
-      { notes: "F#4/G♭4", freq: 369.99 },
-      { notes: "G4", freq: 392.00 },
-      { notes: "G#4/A♭4", freq: 415.30 },
-      { notes: "A4", freq: 440.00 },
-      { notes: "A#4/B♭4", freq: 466.16 },
-      { notes: "B4", freq: 493.88 },
-      { notes: "C5", freq: 523.25 },
-      { notes: "C#5/D♭5", freq: 554.37 },
-      { notes: "D5", freq: 587.33 },
-      { notes: "D#5/E♭5", freq: 622.25 },
-      { notes: "E5", freq: 659.25 },
-      { notes: "F5", freq: 698.46 },
-      { notes: "F#5/G♭5", freq: 739.99 },
-      { notes: "G5", freq: 783.99 },
-      { notes: "G#5/A♭5", freq: 830.61 },
-      { notes: "A5", freq: 880.00 },
-      { notes: "A#5/B♭5", freq: 932.33 },
-      { notes: "B5", freq: 987.77 },
-      { notes: "C6", freq: 1046.50 },
-      { notes: "C#6/D♭6", freq: 1108.73 },
-      { notes: "D6", freq: 1174.66 },
-      { notes: "D#6/E♭6", freq: 1244.51 },
-      { notes: "E6", freq: 1318.51 },
-      { notes: "F6", freq: 1396.91 },
-      { notes: "F#6/G♭6", freq: 1479.98 },
-      { notes: "G6", freq: 1567.98 },
-      { notes: "G#6/A♭6", freq: 1661.22 },
-      { notes: "A6", freq: 1760.00 },
-      { notes: "A#6/B♭6", freq: 1864.66 },
-      { notes: "B6", freq: 1875.53 },
-      { notes: "C7", freq: 2093.00 },
-      { notes: "C#7/D♭7", freq: 2217.46 },
-      { notes: "D7", freq: 2349.32 },
-      { notes: "D#7/E♭7", freq: 2489.02 },
-      { notes: "E7", freq: 2637.02 },
-      { notes: "F7", freq: 2793.83 },
-      { notes: "F#7/G♭7", freq: 2959.96 },
-      { notes: "G7", freq: 3135.96 },
-      { notes: "G#7/A♭7", freq: 3322.44 },
-      { notes: "A7", freq: 3520.00 },
-      { notes: "A#7/B♭7", freq: 3729.31 },
-      { notes: "B7", freq: 3951.07 },
-      { notes: "C8", freq: 4186.01 },
-      { notes: "C#8/D♭8", freq: 4434.92 },
-      { notes: "D8", freq: 4698.63 },
-      { notes: "D#8/E♭8", freq: 4978.03 },
-      { notes: "E8", freq: 5274.04 },
-      { notes: "F8", freq: 5587.65 },
-      { notes: "F#8/G♭8", freq: 5919.91 },
-      { notes: "G8", freq: 6271.93 },
-      { notes: "G#8/A♭8", freq: 6644.88 },
-      { notes: "A8", freq: 7040.00 },
-      { notes: "A#8/B♭8", freq: 7458.62 },
-      { notes: "B8", freq: 7902.13 },
+    const note = [
+      { note: "C0", freq: 16.35 },
+      { note: "C#0/D♭0", freq: 17.32 },
+      { note: "D0", freq: 18.35 },
+      { note: "D#0/E♭0", freq: 19.35 },
+      { note: "E0", freq: 20.60 },
+      { note: "F0", freq: 21.83 },
+      { note: "F#0/G♭0", freq: 23.12 },
+      { note: "G0", freq: 24.50 },
+      { note: "G#0/A♭0", freq: 25.56 },
+      { note: "A0", freq: 27.50 },
+      { note: "A#0/B♭0", freq: 29.14 },
+      { note: "B0", freq: 30.87 },
+      { note: "C1", freq: 32.70 },
+      { note: "C#1/D♭1", freq: 34.65 },
+      { note: "D1", freq: 36.71 },
+      { note: "D#1/E♭1", freq: 38.89 },
+      { note: "E1", freq: 41.20 },
+      { note: "F1", freq: 43.65 },
+      { note: "F#1/G♭1", freq: 46.25 },
+      { note: "G1", freq: 49.00 },
+      { note: "G#1/A♭1", freq: 51.91 },
+      { note: "A1", freq: 55.00 },
+      { note: "A#1/B♭1", freq: 58.27 },
+      { note: "B1", freq: 61.74 },
+      { note: "C2", freq: 65.41 },
+      { note: "C#2/D♭2", freq: 69.30 },
+      { note: "D2", freq: 73.42 },
+      { note: "D#2/E♭2", freq: 77.78 },
+      { note: "E2", freq: 82.41 },
+      { note: "F2", freq: 87.31 },
+      { note: "F#2/G♭2", freq: 92.50 },
+      { note: "G2", freq: 98.00 },
+      { note: "G#2/A♭2", freq: 103.83 },
+      { note: "A2", freq: 110.00 },
+      { note: "A#2/B♭2", freq: 116.54 },
+      { note: "B2", freq: 123.47 },
+      { note: "C3", freq: 130.81 },
+      { note: "C#3/D♭3", freq: 138.59 },
+      { note: "D3", freq: 146.83 },
+      { note: "D#3/E♭3", freq: 155.56 },
+      { note: "E3", freq: 164.81 },
+      { note: "F3", freq: 174.61 },
+      { note: "F#3/G♭3", freq: 185.00 },
+      { note: "G3", freq: 196.00 },
+      { note: "G#3/A♭3", freq: 207.65 },
+      { note: "A3", freq: 220.00 },
+      { nots: "A#3/B♭3", freq: 233.08 },
+      { note: "B3", freq: 246.94 },
+      { note: "C4", freq: 261.63 },
+      { note: "C#4/D♭4", freq: 277.18 },
+      { note: "D4", freq: 293.66 },
+      { note: "D#4/E♭4", freq: 311.13 },
+      { note: "E4", freq: 329.63 },
+      { note: "F4", freq: 349.23 },
+      { note: "F#4/G♭4", freq: 369.99 },
+      { note: "G4", freq: 392.00 },
+      { note: "G#4/A♭4", freq: 415.30 },
+      { note: "A4", freq: 440.00 },
+      { note: "A#4/B♭4", freq: 466.16 },
+      { note: "B4", freq: 493.88 },
+      { note: "C5", freq: 523.25 },
+      { note: "C#5/D♭5", freq: 554.37 },
+      { note: "D5", freq: 587.33 },
+      { note: "D#5/E♭5", freq: 622.25 },
+      { note: "E5", freq: 659.25 },
+      { note: "F5", freq: 698.46 },
+      { note: "F#5/G♭5", freq: 739.99 },
+      { note: "G5", freq: 783.99 },
+      { note: "G#5/A♭5", freq: 830.61 },
+      { note: "A5", freq: 880.00 },
+      { note: "A#5/B♭5", freq: 932.33 },
+      { note: "B5", freq: 987.77 },
+      { note: "C6", freq: 1046.50 },
+      { note: "C#6/D♭6", freq: 1108.73 },
+      { note: "D6", freq: 1174.66 },
+      { note: "D#6/E♭6", freq: 1244.51 },
+      { note: "E6", freq: 1318.51 },
+      { note: "F6", freq: 1396.91 },
+      { note: "F#6/G♭6", freq: 1479.98 },
+      { note: "G6", freq: 1567.98 },
+      { note: "G#6/A♭6", freq: 1661.22 },
+      { note: "A6", freq: 1760.00 },
+      { note: "A#6/B♭6", freq: 1864.66 },
+      { note: "B6", freq: 1875.53 },
+      { note: "C7", freq: 2093.00 },
+      { note: "C#7/D♭7", freq: 2217.46 },
+      { note: "D7", freq: 2349.32 },
+      { note: "D#7/E♭7", freq: 2489.02 },
+      { note: "E7", freq: 2637.02 },
+      { note: "F7", freq: 2793.83 },
+      { note: "F#7/G♭7", freq: 2959.96 },
+      { note: "G7", freq: 3135.96 },
+      { note: "G#7/A♭7", freq: 3322.44 },
+      { note: "A7", freq: 3520.00 },
+      { note: "A#7/B♭7", freq: 3729.31 },
+      { note: "B7", freq: 3951.07 },
+      { note: "C8", freq: 4186.01 },
+      { note: "C#8/D♭8", freq: 4434.92 },
+      { note: "D8", freq: 4698.63 },
+      { note: "D#8/E♭8", freq: 4978.03 },
+      { note: "E8", freq: 5274.04 },
+      { note: "F8", freq: 5587.65 },
+      { note: "F#8/G♭8", freq: 5919.91 },
+      { note: "G8", freq: 6271.93 },
+      { note: "G#8/A♭8", freq: 6644.88 },
+      { note: "A8", freq: 7040.00 },
+      { note: "A#8/B♭8", freq: 7458.62 },
+      { note: "B8", freq: 7902.13 },
     ];
 
-  }
+    let closestNote = note.reduce((prev, curr) => {
+      return (Math.abs(curr.freq - frequency) < Math.abs(prev.freq - frequency) ? curr : prev);
+    });
 
+    return closestNote.note;
+  }
 }
 
 //Creates an instantiation of the class
